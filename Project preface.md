@@ -5,7 +5,7 @@
 
 # Hardware
   The Least System board  is based on **"STM32F030R8T6"**.
-> ([Schematic](./Hardware/Schematic.pdf))  
+> ([Schematic](./Hardware/Schematic_Board.pdf))  
 > ([STM32F030R8T6](http://www.st.com/en/microcontrollers/stm32f030r8.html) @ 48MHz with 64KB of flash and 8KB of RAM).
 
 # Software 
