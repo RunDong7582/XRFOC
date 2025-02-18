@@ -5,7 +5,7 @@
 
 - 1、1月10号去过公司找胡师兄，了解项目的现况，得到一些关于硬件、调试器、型号的要求。
 - 2、结合师兄所给的ST MCSDKV5.4和已整理的资料，查找到一些相关的链接，给出了库的架构图，也有介绍相关的API,为读懂整个库奠定了基础。
-> [st工程师讲解库]（https://c.51diantang.com/columndetail?id=126b8417f88949799f4caf99e98e2ee1)
+> [st工程师讲解库]（https://c.51diantang.com/columndetail?id=126b8417f88949799f4caf99e98e2ee1）
 > [野火] （https://doc.embedfire.com/motor/motor_tutorial/zh/latest/index.html）
 > [正点] （https://zhuanlan.zhihu.com/p/654667951）
 - 3、基本的FOC控制流程，电流环（力矩环）、速度环、位置环，克拉克变换、帕克变换、反帕克变换都已经理解了，现阶段可以尝试先看看已有的matlab模型跑跑仿真。接下来可以了解一下不同观测器的原理，主要看滑膜观测器smo的原理。
