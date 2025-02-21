@@ -19,3 +19,10 @@
 * [2.3] [永磁同步电机控制与仿真系列文章](https://zhuanlan.zhihu.com/p/416107687)
 
 * [2.4] [图示很棒](https://www.disnox.top/docs/pmsm_motor#1-%E4%B8%89%E7%9B%B8-pmsm-%E5%9F%BA%E6%9C%AC%E6%95%B0%E5%AD%A6%E6%A8%A1%E5%9E%8B)
+
+## 3.精讲&实操
+* [3.1] [csdn朴人&含cubemx配置](https://blog.csdn.net/qq570437459/category_12672491.html)
+
+* [3.2] [csdnBLDC基础与FOC笔记](https://blog.csdn.net/qq_28601023/category_12137172.html)
+
+* [3.3] [玉米柒唔&电机控制](https://blog.csdn.net/liu_eight_nine/category_12497646.html)
