@@ -2,7 +2,7 @@
 #define __MC_FOC_CORE_H
 
 /**
- *  @file:      XRFOC_Lib/include/mc_foc_core.c
+ *  @file:      XRFOC_Lib/include/mc_adaptor.h
  *  @brief:     Main FOC's call Func application layer.
  *  @author:    RunDong7582
  *  @date  :    2025 3/21 14:10

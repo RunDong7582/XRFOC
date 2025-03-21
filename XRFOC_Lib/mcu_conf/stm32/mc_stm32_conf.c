@@ -9,6 +9,18 @@
 
 #include "../../include/mc_adaptor.h"
 
+extern float voltage_power_supply;
+
+static int pwm_config  ( struct mc_adaptor_stm32_periphal *self);
+static int pwm_dutyset ( struct mc_adaptor_stm32_periphal *self, float duty);
+static int adc_config  ( struct mc_adaptor_stm32_periphal *self); 
+static int adc_read    ( struct mc_adaptor_stm32_periphal *self);
+
+int mc_adaptor_stm32_pwm_init ( struct mc_adaptor_stm32_periphal *self )
+{
+}
+
+
 void PWM_SET(float Ua, float Ub, float Uc) 
 {
     /* constrain the three-phase voltage to [0, voltage_power_supply]  */
