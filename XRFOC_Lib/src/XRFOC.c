@@ -14,20 +14,11 @@
 #include "../include/mc_lowpassfilter.h"
 #include "../include/mc_foc_core.h"
 #include "../include/mc_motor.h"
+#include "../include/mc_adaptor.h"
 
 /* ------ Global User Define --------- */
 #define _sqrt(a)                  ( _sqrtApprox(a) )
 #define _constrain(IMM, Min, Max) ((IMM)<(Min)?(Min) : ((IMM)>(Max)?(Max):(IMM)))
-
-#define _PI                         3.14159265359f
-#define _PI_2                       1.57079632679f
-#define _PI_3                        1.0471975512f
-#define _3PI_2                      4.71238898038f
-#define _SQRT3_2                    0.86602540378f
-#define _SQRT3                      1.73205080757f
-#define _SQRT3_2                    0.86602540378f
-#define _1_SQRT3                    0.57735026919f
-#define _2_SQRT3                    1.15470053838f
 
 /* ------ Global Event Enum ------------ */
 enum {
@@ -71,10 +62,11 @@ typedef enum {
     STATE_CLOSEDLOOP,
 } FOCState;
 
-/* ------ Extern struct variable ------- */
+/* ------ Extern Global struct  -------- */
+extern struct mc_adaptor_i stm32_adaptor;
+
 /* ------ Global User Variable --------- */
 float voltage_power_supply = 12.0f;
-
 
 /* ------ Global User Struct --------- */
 
@@ -121,6 +113,8 @@ int xfoc_module_init (void)
     pid_init(&current_q_loop,  1.2f, 0.0f, 0.0f, 100000.0f, voltage_power_supply / 2.0f);
     pid_init(&current_d_loop,  1.2f, 0.0f, 0.0f, 100000.0f, voltage_power_supply / 2.0f);
     
+    /* VBUS */
+    xfoc_vbus_set(12.0f);
     /* User add encoder initialize */
     /* sensor_as5600_init(&sensor0); */
     /* sensor_as5600_init(&sensor1); */
@@ -129,9 +123,13 @@ int xfoc_module_init (void)
     /* s0_twowire_iic_init(&sensor0); */
     /* s1_twowire_iic_init(&sensor1); */
 
+    
     /* Periphal config */
+    mc_button_init(&stm32_adaptor);
     mc_pwm_init(&stm32_adaptor, PWM_Freq, PWM_Arr_bit);
-    mc_adc_init(&)
+    mc_adc_init(&stm32_adaptor);
+    mc_timer_init(&stm32_adaptor, timer_freq);
+    mc_timer_start(&stm32_adaptor);
     return 1;
 }
 

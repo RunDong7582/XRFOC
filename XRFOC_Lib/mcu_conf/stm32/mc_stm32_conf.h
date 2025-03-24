@@ -7,4 +7,5 @@ struct mc_adaptor_stm32_periphal {
     struct mc_adaptor_i *adaptor;
 };
 
+
 #endif 
