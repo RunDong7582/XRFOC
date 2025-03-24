@@ -1,6 +1,10 @@
 #ifndef __MC_ADAPTOR_H
 #define __MC_ADAPTOR_H
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 /**
  *  @file:      XRFOC_Lib/include/mc_adaptor.h
  *  @brief:     Multi platform support.
@@ -9,58 +13,103 @@
  *  @version:   XRFOC v0.1
  */
 
-/* ----  Periphal-Oriented typedef ---- */
-typedef int (*mc_adaptor_pwm_config_fn_t)     (void *mcu);
-typedef int (*mc_adaptor_pwm_duty_set_fn_t)   (void *mcu, float point);
-typedef int (*mc_adaptor_adc_config_fn_t)     (void *mcu);
-typedef int (*mc_adaptor_adc_curr_read_fn_t)  (void *mcu);
+#include <stdint.h>
 
-struct mc_adaptor_i {
-    mc_adaptor_pwm_config_fn_t    pwm_config;
-    mc_adaptor_pwm_duty_set_fn_t  pwm_dutyset;      
-    mc_adaptor_adc_config_fn_t    adc_config;
-    mc_adaptor_adc_curr_read_fn_t adc_read;      
-};
+ 
+#define STM32
+#define STM32F0
 
-static inline int mc_adaptor_pwm_config   (void *mcu) 
-{
-    return (*(struct mc_adaptor_i **)mcu)->pwm_config(mcu);
-}
-
-static inline int mc_adaptor_pwm_duty_set (void *mcu, float duty) 
-{
-    return (*(struct mc_adaptor_i **)mcu)->pwm_dutyset(mcu, duty);
-}
-
-static inline int mc_adaptor_adc_config   (void *mcu) 
-{
-    return (*(struct mc_adaptor_i **)mcu)->adc_config(mcu);
-}
-
-static inline int mc_adaptor_adc_curr_read (void *mcu) 
-{
-    return (*(struct mc_adaptor_i **)mcu)->adc_read(mcu);
-}
-
-/* ------- MCU Periphal & GPIO -------- */ 
-#ifdef STM32
-
-#include "stm32_f0.c"
-#define M0_PWMA_TIM   TIM1
-#define M0_PWMA_CH    TIM_CHANNEL_1
-
-#define CURRENT_A_ADC_CH   ADC_CHANNEL_0
-#define CURRENT_B_ADC_CH   ADC_CHANNEL_1
+#ifdef  STM32
+    #ifdef  STM32F0
+    #include "stm32f0xx_hal.h"
+    #include "../CMSIS/include/stm32f030x8.h"
+    #elif   STM32F1
+    #include "stm32_f1xx_hal.h"
+    #elif   STM32F4
+    #include "stm32_f4xx_hal.h"
+    #elif   STM32G0
+    #include "stm32_g0xx_hal.h"
+    #elif   STM32G4
+    #include "stm32_g4xx_hal.h"
+    #endif
 
 #elif defined(ESP32)
-#include "esp32_pwm.c"
+
+#endif
+
+/* ------- MCU Periphal & GPIO -------- */
+#ifdef      STM32
+#define     M0_PWMA_TIM   TIM1
+#define     M0_PWMA_CH    TIM_CHANNEL_1
+
+#define     CURRENT_A_ADC_CH   ADC_CHANNEL_0
+#define     CURRENT_B_ADC_CH   ADC_CHANNEL_1
+#endif 
+
+#ifdef  ESP32
 #define M1_PWM_A 26
 #define M1_PWM_B 27 
 #define M1_PWM_C 14
-
-#define PWM_Freq 30000
-#define PWM_Arr_bit 8
-
 #endif
+
+
+/* ----  Periphal-Oriented typedef ---- */
+typedef int (*mc_adaptor_pwm_init_fn_t)         (void *mcu, uint32_t freq, uint8_t resolution);
+typedef int (*mc_adaptor_pwm_set_duty_fn_t)     (void *mcu, uint8_t channel, float duty);
+typedef int (*mc_adaptor_adc_init_fn_t)         (void *mcu);
+typedef int (*mc_adaptor_adc_read_fn_t)         (void *mcu, uint8_t channel, float *value);
+
+typedef int (*mc_adaptor_timer_init_fn_t)       (void *mcu, uint32_t freq);
+typedef int (*mc_adaptor_timer_start_fn_t)      (void *mcu);
+
+struct mc_adaptor_i {
+    /* PWM operation */
+    mc_adaptor_pwm_init_fn_t        pwm_init;
+    mc_adaptor_pwm_set_duty_fn_t    pwm_set_duty;      
+    /* ADC operation */
+    mc_adaptor_adc_init_fn_t        adc_init;
+    mc_adaptor_adc_read_fn_t        adc_read;
+    /* TIMER operation */
+    mc_adaptor_timer_init_fn_t      timer_init;
+    mc_adaptor_timer_start_fn_t     timer_start;
+};
+
+/* 内联函数封装调用 */
+static inline int mc_pwm_init (void *mcu, uint32_t freq, uint8_t resolution) {
+    return ((struct mc_adaptor_i *)mcu)->pwm_init(mcu, freq, resolution);
+}
+
+static inline int mc_pwm_set_duty (void *mcu, uint8_t channel, float duty) {
+    return ((struct mc_adaptor_i *)mcu)->pwm_set_duty(mcu, channel, duty);
+}
+
+static inline int mc_adc_init (void *mcu) {
+    return ((struct mc_adaptor_i *)mcu)->adc_init(mcu);
+}
+
+static inline int mc_adc_read (void *mcu, uint8_t channel, float *value) {
+    return ((struct mc_adaptor_i *)mcu)->adc_read(mcu, channel, value);
+}
+// static inline int mc_adaptor_pwm_config   (void *mcu) 
+// {
+//     return (*(struct mc_adaptor_i **)mcu)->pwm_config(mcu);
+// }
+
+// static inline int mc_adaptor_pwm_duty_set (void *mcu, float duty) 
+// {
+//     return (*(struct mc_adaptor_i **)mcu)->pwm_dutyset(mcu, duty);
+// }
+
+// static inline int mc_adaptor_adc_config   (void *mcu) 
+// {
+//     return (*(struct mc_adaptor_i **)mcu)->adc_config(mcu);
+// }
+
+// static inline int mc_adaptor_adc_curr_read (void *mcu) 
+// {
+//     return (*(struct mc_adaptor_i **)mcu)->adc_read(mcu);
+// }
+
+
 
 #endif 

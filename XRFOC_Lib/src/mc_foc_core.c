@@ -21,6 +21,7 @@ extern LowPassFilter CurrentQ_Flt;
 extern LowPassFilter CurrentD_Flt;
 
 extern float voltage_power_supply; // 如果需要使用电压变量
+extern struct mc_adaptor_i stm32_adaptor;
 
 /* ====== PID SET FUNC ======== */
 /*        Speed pid             */

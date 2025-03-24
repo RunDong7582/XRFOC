@@ -65,7 +65,13 @@ enum {
 
 } XRFOC_EVENT;
 
+typedef enum {
+    STATE_PREALIGN,
+    STATE_OPENLOOP,
+    STATE_CLOSEDLOOP,
+} FOCState;
 
+/* ------ Extern struct variable ------- */
 /* ------ Global User Variable --------- */
 float voltage_power_supply = 12.0f;
 
@@ -96,25 +102,36 @@ LowPassFilter Speed_Flt;
 LowPassFilter CurrentQ_Flt;
 LowPassFilter CurrentD_Flt;
 
-int foc_module_init (void)
+int xfoc_module_init (void)
 {
+    /* lpf speed d-q initialize */
+    filter_Init(&Speed_Flt, 0.01f);         //速度环滤波 Tc = 0.01s <=> 带宽100Hz
+
     /* lpf curr d-q initialize */
     filter_Init(&CurrentQ_Flt, 0.002f);     //电流环 Q轴滤波 Tc = 0.002s <=> 带宽500Hz   
     filter_Init(&CurrentD_Flt, 0.002f);     //电流环 D轴滤波 Tc = 0.002s <=> 带宽500Hz
-
-    /* lpf speed d-q initialize */
-    filter_Init(&Speed_Flt, 0.01f);         //速度环滤波 Tc = 0.01s <=> 带宽100Hz
+    
+    /* pid speed (w omega) initialize */
+    pid_init(&speed_loop,      2.0f, 0.0f, 0.0f, 100000.0f, voltage_power_supply / 2.0f);
+   
+    /* pid position (angle) intialize */
+    pid_init(&position_loop,   2.0f, 0.0f, 0.0f, 100000.0f, voltage_power_supply / 2.0f);
 
     /* pid curr d-q initialize */
     pid_init(&current_q_loop,  1.2f, 0.0f, 0.0f, 100000.0f, voltage_power_supply / 2.0f);
     pid_init(&current_d_loop,  1.2f, 0.0f, 0.0f, 100000.0f, voltage_power_supply / 2.0f);
     
-    /* pid speed initialize */
-    pid_init(&speed_loop,      2.0f, 0.0f, 0.0f, 100000.0f, voltage_power_supply / 2.0f);
-   
-    /* pid position intialize */
-    pid_init(&position_loop,   2.0f, 0.0f, 0.0f, 100000.0f, voltage_power_supply / 2.0f);
+    /* User add encoder initialize */
+    /* sensor_as5600_init(&sensor0); */
+    /* sensor_as5600_init(&sensor1); */
 
+    /* sensor protocol */
+    /* s0_twowire_iic_init(&sensor0); */
+    /* s1_twowire_iic_init(&sensor1); */
+
+    /* Periphal config */
+    mc_pwm_init(&stm32_adaptor, PWM_Freq, PWM_Arr_bit);
+    mc_adc_init(&)
     return 1;
 }
 

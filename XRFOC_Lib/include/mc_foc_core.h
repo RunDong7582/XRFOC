@@ -17,7 +17,8 @@
 
 /* ------ define ---------- */
 #define     PI    3.14159265359f
-
+#define     PWM_Freq       30000  // 30kHz
+#define     PWM_Arr_bit        8  //  8bit
 /* ----- variable --------- */
 volatile uint32_t timer_counter = 0;
 

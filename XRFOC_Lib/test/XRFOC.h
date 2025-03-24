@@ -6,4 +6,4 @@
  *  @version:   XRFOC v0.1
  */
 
-void xfoc_module_init (void);
+int xfoc_module_init (void);
