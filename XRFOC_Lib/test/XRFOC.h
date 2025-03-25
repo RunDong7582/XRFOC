@@ -6,4 +6,6 @@
  *  @version:   XRFOC v0.1
  */
 
-int xfoc_module_init (void);
+int xfoc_module_init ( void );
+void serialReceiveUserCommand ( void );
+float serial_motor_target ( void );

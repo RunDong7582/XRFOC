@@ -23,9 +23,13 @@ extern LowPassFilter CurrentQ_Flt;
 extern LowPassFilter CurrentD_Flt;
 
 /* ------- global variable ------- */
-xfoc_vol_cur_t xfoc_core;
+xfoc_vol_cur_t      xfoc_core;
+xfoc_origin_t       xfoc_origin;
+
 float voltage_power_supply; 
 extern struct mc_adaptor_i stm32_adaptor;
+extern float filter_ouput;
+extern float serial_target;
 
 /* ====== PID SET FUNC ======== */
 /*        Speed pid             */
@@ -217,4 +221,96 @@ xfoc_vol_cur_t xfoc_Iq_Id_calc (float current_a, float current_b, float angle_el
     xfoc_core_child.I_d = xfoc_core_child.I_alpha * ct + xfoc_core_child.I_beta * st;
     xfoc_core_child.I_q = xfoc_core_child.I_beta * ct - xfoc_core_child.I_alpha * st;
     return xfoc_core_child;
+}
+
+/* current filtering */
+/* as for the INA current sensing sensor, it is necessary to be filtered */
+/* but if you use the adc on chip, it is best not to add filtering , which causes lags */
+float xfoc_current_q ( void ) {
+    float filtered_I_q = filter_process(&CurrentQ_Flt, xfoc_core.I_q);
+    return filtered_I_q;
+}
+
+float xfoc_current_d ( void ) {
+    float filtered_I_d = filter_process(&CurrentD_Flt, xfoc_core.I_d);
+    return filtered_I_d;
+}
+
+/* ===== SMO Voltage Torque ===== */
+void xfoc_smo_voltage_set_torque ( float input )
+{
+    filter_ouput = 0.002 * input + 0.998 * filter_ouput;
+    mc_set_torque(filter_ouput, 0, SMO.est_theta);
+}
+
+/* ===== SMO Current Torque ===== */
+void xfoc_smo_current_set_torque ( float input )
+{
+    filter_ouput = 0.002 * input + 0.998 * filter_ouput;
+    mc_set_torque(pid_process(&current_q_loop, filter_ouput - xfoc_current_q()), 0, SMO.est_theta);
+}
+
+/* ===== SMO Speed Control ===== */
+void xfoc_smo_current_set_speed ( float input )
+{
+    filter_ouput = 0.002 * input + 0.998 * filter_ouput;
+    if ( filter_ouput < -5 || filter_ouput > 5)
+    {
+        mc_set_torque(pid_process(&current_q_loop, (XFOC_speed_pid_tune(filter_ouput - SMO.est_speed / 7) - xfoc_current_q())), 0, SMO.est_theta);
+    }
+    else
+    {
+        mc_set_torque(0, 0, 0);
+    }
+}
+
+/* ===== Simple interface func ===== */
+// need sensor !
+// void xfoc_current_set_torque ( float input )
+// {
+//     mc_set_torque(pid_process(&current_q_loop, input - xfoc_current_q()), pid_process(&current_d_loop, -xfoc_current_d()), S1_electricalAngle());
+// }
+
+// void xfoc_voltage_set_torque ( float input )
+// {
+//     mc_set_torque(input, 0, S1_electricalAngle());
+// }
+
+// void xfoc_set_speed_angle ( float input )
+// {
+//     xfoc_voltage_set_torque(XFOC_speed_pid_tune(input - SMO.est_speed));
+// }
+
+int vf_start ( int num, int dir )
+{
+    if (num == 0) {
+        SMO._VF_start(num , dir);
+        if (SMO.VF_flag == 1) 
+            return 1;
+    }
+    if (num == 1) {
+        SMO._VF_start(num, dir);
+        if (SMO.VF_flag == 1)
+            return 1;
+    }
+    return 0;
+}
+
+void First_Target ( float tar ) {
+    serial_target = tar;
+}
+
+void xfoc_getphase_current ( void ) {
+    mc_adc_read(&stm32_adaptor, CURRENT_A_ADC_CH, &xfoc_origin.I_a);
+    mc_adc_read(&stm32_adaptor, CURRENT_B_ADC_CH, &xfoc_origin.I_b);
+    mc_adc_read(&stm32_adaptor, CURRENT_C_ADC_CH, &xfoc_origin.I_c);
+}
+
+void xrfoc_runloop ( void ) 
+{
+    xfoc_getphase_current();
+
+    xfoc_core = xfoc_Iq_Id_calc(xfoc_origin.I_a, xfoc_origin.I_b, SMO.est_theta);
+
+    xfoc_smo_close_loop(&xfoc_core);
 }

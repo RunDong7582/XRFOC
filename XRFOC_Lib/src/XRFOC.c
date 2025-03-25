@@ -67,7 +67,8 @@ extern struct mc_adaptor_i stm32_adaptor;
 
 /* ------ Global User Variable --------- */
 float voltage_power_supply = 12.0f;
-
+float serial_target;
+float filter_ouput;
 /* ------ Global User Struct --------- */
 
 
@@ -149,3 +150,15 @@ int main (void)
 }
 
 
+/* 用于shell控制、解析上位机发送指令 */
+/* refer to my project " Gesture recognition based on Raspiberry 4B & STM32 G4 "*/
+/* strtok is very equal to this job */
+void serialReceiveUserCommand ( void ) 
+{
+
+}
+
+float serial_motor_target ( void ) 
+{
+    return serial_target;
+}

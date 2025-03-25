@@ -37,6 +37,11 @@ typedef struct {
     float Uq;
 } xfoc_vol_cur_t;
 
+typedef struct {
+    float I_a;
+    float I_b;
+    float I_c;
+} xfoc_origin_t;
 /* ----- pid interface func ----- */
 void XFOC_set_speed_pid     ( float P, float I, float D, float ramp, float limit );
 void XFOC_set_angle_pid     ( float P, float I, float D, float ramp, float limit );
@@ -60,5 +65,8 @@ void xfoc_vbus_set  ( float power_supply );
 
 /* ------ Current Update ------- */
 xfoc_vol_cur_t xfoc_Iq_Id_calc (float current_a, float current_b, float angle_el);
+float xfoc_current_q ( void );
+float xfoc_current_d ( void );
+void xfoc_smo_voltage_set_torque ( float input );
 
 #endif 
