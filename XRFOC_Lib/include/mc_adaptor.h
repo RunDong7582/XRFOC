@@ -15,9 +15,9 @@
 
 #include <stdint.h>
 
- 
 #define STM32
 #define STM32F0
+// #define ESP32
 
 #ifdef  STM32
     #ifdef  STM32F0
@@ -32,9 +32,6 @@
     #elif   STM32G4
     #include "stm32_g4xx_hal.h"
     #endif
-
-#elif defined(ESP32)
-
 #endif
 
 /* ------- MCU Periphal & GPIO -------- */
@@ -69,8 +66,8 @@
 
 
 /* ----  Periphal-Oriented typedef ---- */
-typedef int (*mc_adaptor_button_init_fn_t)      (void *mcu);
-typedef int (*mc_adaptor_button_on_off_fn_t)    (void *mcu, int state);
+typedef int (*mc_adaptor_power_init_fn_t)      (void *mcu);
+typedef int (*mc_adaptor_power_on_off_fn_t)    (void *mcu, int state);
 
 typedef int (*mc_adaptor_pwm_init_fn_t)         (void *mcu, uint32_t freq, uint8_t resolution);
 typedef int (*mc_adaptor_pwm_set_duty_fn_t)     (void *mcu, uint8_t channel, float duty);
@@ -84,9 +81,9 @@ typedef int (*mc_adaptor_timer_start_fn_t)      (void *mcu);
 typedef int (*mc_adaptor_uart_init_fn_t)        (void *mcu, uint32_t baudrate);
 
 struct mc_adaptor_i {
-    /* BUTTON operation */
-    mc_adaptor_button_init_fn_t     button_init;
-    mc_adaptor_button_on_off_fn_t   button_on_off;
+    /* power operation */
+    mc_adaptor_power_init_fn_t      power_init;
+    mc_adaptor_power_on_off_fn_t    power_on_off;
     /* PWM  operation */
     mc_adaptor_pwm_init_fn_t        pwm_init;
     mc_adaptor_pwm_set_duty_fn_t    pwm_set_duty;      
@@ -101,12 +98,12 @@ struct mc_adaptor_i {
 };
 
 /* 内联函数封装调用 */
-static inline int mc_button_init (void *mcu) {
-    return ((struct mc_adaptor_i *)mcu)->button_init(mcu);
+static inline int mc_power_init (void *mcu) {
+    return ((struct mc_adaptor_i *)mcu)->power_init(mcu);
 }
 
-static inline int mc_button_on_off (void *mcu, int state) {
-    return ((struct mc_adaptor_i *)mcu)->button_on_off(mcu, state);
+static inline int mc_power_on_off (void *mcu, int state) {
+    return ((struct mc_adaptor_i *)mcu)->power_on_off(mcu, state);
 }
 
 static inline int mc_pwm_init (void *mcu, uint32_t freq, uint8_t resolution) {
@@ -136,27 +133,5 @@ static inline int mc_timer_start (void *mcu) {
 static inline int mc_uart_init (void *mcu, uint32_t baudrate) {
     return ((struct mc_adaptor_i *)mcu)->uart_init(mcu, baudrate);
 }
-
-// static inline int mc_adaptor_pwm_config   (void *mcu) 
-// {
-//     return (*(struct mc_adaptor_i **)mcu)->pwm_config(mcu);
-// }
-
-// static inline int mc_adaptor_pwm_duty_set (void *mcu, float duty) 
-// {
-//     return (*(struct mc_adaptor_i **)mcu)->pwm_dutyset(mcu, duty);
-// }
-
-// static inline int mc_adaptor_adc_config   (void *mcu) 
-// {
-//     return (*(struct mc_adaptor_i **)mcu)->adc_config(mcu);
-// }
-
-// static inline int mc_adaptor_adc_curr_read (void *mcu) 
-// {
-//     return (*(struct mc_adaptor_i **)mcu)->adc_read(mcu);
-// }
-
-
 
 #endif 

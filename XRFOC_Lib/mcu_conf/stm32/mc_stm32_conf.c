@@ -8,18 +8,6 @@
 
 #include "mc_stm32_conf.h"
 
-// extern float voltage_power_supply;
-
-/* MCU_STM32 Periphal Struct */ 
-typedef struct {
-    GPIO_InitTypeDef    gpio_config;
-    TIM_HandleTypeDef   htim;
-    ADC_HandleTypeDef   hadc;
-    UART_HandleTypeDef  huart;
-            uint32_t    pwm_freq;
-            uint8_t     pwm_resolution;
-} mc_stm32_hw_t;
-
 /* Button Initialize */
 static int stm32_button_init (void *mcu) {
     mc_stm32_hw_t *hw = (mc_stm32_hw_t *)mcu;
@@ -114,31 +102,3 @@ struct mc_adaptor_i stm32_adaptor = {
     .timer_init = stm32_timer_init,
     .timer_start = stm32_timer_start_it
 };
-
-// static int pwm_config  ( struct mc_adaptor_stm32_periphal *self);
-// static int pwm_dutyset ( struct mc_adaptor_stm32_periphal *self, float duty);
-// static int adc_config  ( struct mc_adaptor_stm32_periphal *self); 
-// static int adc_read    ( struct mc_adaptor_stm32_periphal *self);
-
-// int mc_adaptor_stm32_pwm_init ( struct mc_adaptor_stm32_periphal *self )
-// {
-// }
-
-// void PWM_SET(float Ua, float Ub, float Uc) 
-// {
-//     /* constrain the three-phase voltage to [0, voltage_power_supply]  */
-//     Ua = _constrain(Ua, 0.0f, voltage_power_supply);
-//     Ub = _constrain(Ub, 0.0f, voltage_power_supply);
-//     Uc = _constrain(Uc, 0.0f, voltage_power_supply);
-
-//     /*  calculate duty  */
-//     /*  constrain the duty to [0, 1] */
-//     float dc_a = _constrain(Ua / voltage_power_supply, 0.0f, 1.0f);
-//     float dc_b = _constrain(Ub / voltage_power_supply, 0.0f, 1.0f);
-//     float dc_c = _constrain(Uc / voltage_power_supply, 0.0f, 1.0f);
-  
-// //     //写入PWM到PWM 0 1 2 通道
-// //     ledcWrite(3, dc_a * 255);
-// //     ledcWrite(4, dc_b * 255);
-// //     ledcWrite(5, dc_c * 255);
-// }
