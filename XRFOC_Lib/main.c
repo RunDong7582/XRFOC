@@ -57,19 +57,20 @@ void XRFOC_Init()
 
 void xrfoc_module_struct_clear  ( void )
 {
-    memset(&SMO,         0, sizeof(SMO));
-    memset(&Cur_vol,     0, sizeof(Cur_vol));
-    memset(&motor_bldc,     0, sizeof(motor_bldc));
-	memset(&CurrentQ_Flt,   0, sizeof(CurrentQ_Flt));
-	memset(&CurrentD_Flt,   0, sizeof(CurrentD_Flt));
-    memset(&speed_loop,     0, sizeof(speed_loop));
-	memset(&position_loop,  0, sizeof(position_loop));
-	memset(&current_q_loop,    0, sizeof(current_q_loop));
-    memset(&current_d_loop,    0, sizeof(current_d_loop));
+    memset(&SMO, 0, sizeof(SMO));
+    memset(&Cur_vol, 0, sizeof(Cur_vol));
+    memset(&motor_bldc, 0, sizeof(motor_bldc));
+    memset(&speed_loop, 0, sizeof(speed_loop));
+	memset(&CurrentQ_Flt, 0, sizeof(CurrentQ_Flt));
+	memset(&CurrentD_Flt, 0, sizeof(CurrentD_Flt));
+	memset(&position_loop, 0, sizeof(position_loop));
+	memset(&current_q_loop, 0, sizeof(current_q_loop));
+    memset(&current_d_loop, 0, sizeof(current_d_loop));
 }
 
 int bldc_init ( struct mc_adaptor_stm32_hw *adaptor )
 {
+    xrfoc_module_struct_clear();
     if (mc_adaptor_stm32_hw_init(adaptor))
     {
         return 0;
