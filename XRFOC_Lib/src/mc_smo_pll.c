@@ -146,10 +146,8 @@ if ( smo->VF_flag == 2) {
     }
     shaft_angle = _normalizeAngle (shaft_angle + dir * Target_Vel_openloop * Ts );
     
-    if (num == 0) {
-    M0_setTorque(2.0f + Target_Vel_openloop * smo->VF_uq_delta, 0, shaft_angle);//0.006为uq增量
-    } else if (num == 1) {
-    M1_setTorque(2.0f + Target_Vel_openloop * smo->VF_uq_delta, 0, shaft_angle);
+    if (num == 1) {
+        mc_set_torque (2.0f + Target_Vel_openloop * smo->VF_uq_delta, 0, shaft_angle);
     }
     open_loop_timestamp = now_us;
 }

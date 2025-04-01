@@ -36,14 +36,13 @@ float xrfoc_angle_pid_tune   ( float error );
 /* ----- Math solution for fast floaing point calculation ----- */
 float _normalizeAngle       ( float angle ); 
 float _sqrtApprox           ( float number ); 
-float _atan2                ( float y, float x );
 
 /* ---------------------- SVPWM Func -------------------------- */
 void mc_setpwm      ( float Ua, float Ub, float Uc );
 void mc_set_torque  ( float Uq, float Ud, float angle_el );
 
 /* ----------------------- foc state -------------------------- */
-int  xfoc_vf_start   ( int dir );
+int  xfoc_vf_start   ( int num, int dir );
 void xrfoc_disable   ( void );
 void xrfoc_enable    ( void ); 
 void xrfoc_vbus_set  ( float power_supply ); 
