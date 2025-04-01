@@ -9,78 +9,30 @@
  *  @file:      XRFOC_Lib/include/mc_adaptor.h
  *  @brief:     Multi platform support.
  *  @author:    RunDong7582
- *  @date  :    2025 3/21 16:47
- *  @version:   XRFOC v0.1
+ *  @date  :    2025 3/21 16:47 -> 2025 4/1 16:26
+ *  @version:   XRFOC v0.2
  */
 
 #include <stdint.h>
 
-#define STM32
-#define STM32F0
-// #define ESP32
+typedef int (*mc_adaptor_clk_init_fn_t)         (void *mcu, uint32_t plln, uint32_t pllm, uint32_t pllp, uint32_t pllq);         
+typedef int (*mc_adaptor_power_init_fn_t)       (void *mcu);
+typedef int (*mc_adaptor_power_on_off_fn_t)     (void *mcu, int state);
 
-#ifdef  STM32
-    #ifdef  STM32F0
-    #include "stm32f0xx_hal.h"
-    #include "../CMSIS/include/stm32f030x8.h"
-    #elif   STM32F1
-    #include "stm32_f1xx_hal.h"
-    #elif   STM32F4
-    #include "stm32_f4xx_hal.h"
-    #elif   STM32G0
-    #include "stm32_g0xx_hal.h"
-    #elif   STM32G4
-    #include "stm32_g4xx_hal.h"
-    #endif
-#endif
-
-/* ------- MCU Periphal & GPIO -------- */
-#ifdef      STM32
-
-#define Motor_Enable_Pin        GPIO_PIN_4
-#define Motor_Enable_GPIO_Port  GPIOC
-#define     PWM_TIM         TIM1
-#define     PWM_A_CH        TIM_CHANNEL_1
-// #define     PWM_A_CH_N      TIM_CHANNEL_2
-
-#define     PWM_B_CH        TIM_CHANNEL_2
-// #define     PWM_B_CH_N      TIM_CHANNEL_4
-
-#define     PWM_C_CH        TIM_CHANNEL_3
-// #define     PWM_C_CH_N      TIM_CHANNEL_6
-
-
-#define     TIM_CNT         TIM6
-
-#define     CURRENT_A_ADC_CH   ADC_CHANNEL_0
-#define     CURRENT_B_ADC_CH   ADC_CHANNEL_1
-#define     CURRENT_C_ADC_CH   ADC_CHANNEL_2
-
-#endif 
-
-#ifdef  ESP32
-#define M1_PWM_A 26
-#define M1_PWM_B 27 
-#define M1_PWM_C 14
-#endif
-
-
-/* ----  Periphal-Oriented typedef ---- */
-typedef int (*mc_adaptor_power_init_fn_t)      (void *mcu);
-typedef int (*mc_adaptor_power_on_off_fn_t)    (void *mcu, int state);
-
-typedef int (*mc_adaptor_pwm_init_fn_t)         (void *mcu, uint32_t freq, uint8_t resolution);
+typedef int (*mc_adaptor_pwm_init_fn_t)         (void *mcu, uint16_t arr, uint16_t psc);
 typedef int (*mc_adaptor_pwm_set_duty_fn_t)     (void *mcu, uint8_t channel, float duty);
 
 typedef int (*mc_adaptor_adc_init_fn_t)         (void *mcu);
 typedef int (*mc_adaptor_adc_read_fn_t)         (void *mcu, uint8_t channel, float *value);
 
-typedef int (*mc_adaptor_timer_init_fn_t)       (void *mcu, uint32_t freq);
+typedef int (*mc_adaptor_timer_init_fn_t)       (void *mcu, uint16_t arr, uint16_t psc);
 typedef int (*mc_adaptor_timer_start_fn_t)      (void *mcu);
 
 typedef int (*mc_adaptor_uart_init_fn_t)        (void *mcu, uint32_t baudrate);
 
 struct mc_adaptor_i {
+    /* CLK Tree operation */
+    mc_adaptor_clk_init_fn_t        clk_init;
     /* power operation */
     mc_adaptor_power_init_fn_t      power_init;
     mc_adaptor_power_on_off_fn_t    power_on_off;
@@ -98,6 +50,9 @@ struct mc_adaptor_i {
 };
 
 /* 内联函数封装调用 */
+static inline int mc_clk_init (void *mcu, uint32_t plln, uint32_t pllm, uint32_t pllp, uint32_t pllq) {
+    return ((struct mc_adaptor_i *)mcu)->clk_init(mcu, plln, pllm, pllp, pllq);
+}
 static inline int mc_power_init (void *mcu) {
     return ((struct mc_adaptor_i *)mcu)->power_init(mcu);
 }
@@ -106,8 +61,8 @@ static inline int mc_power_on_off (void *mcu, int state) {
     return ((struct mc_adaptor_i *)mcu)->power_on_off(mcu, state);
 }
 
-static inline int mc_pwm_init (void *mcu, uint32_t freq, uint8_t resolution) {
-    return ((struct mc_adaptor_i *)mcu)->pwm_init(mcu, freq, resolution);
+static inline int mc_pwm_init (void *mcu, uint16_t arr, uint16_t psc) {
+    return ((struct mc_adaptor_i *)mcu)->pwm_init(mcu, arr, psc);
 }
 
 static inline int mc_pwm_set_duty (void *mcu, uint8_t channel, float duty) {
@@ -122,8 +77,8 @@ static inline int mc_adc_read (void *mcu, uint8_t channel, float *value) {
     return ((struct mc_adaptor_i *)mcu)->adc_read(mcu, channel, value);
 }
 
-static inline int mc_timer_init (void *mcu, uint32_t freq) {
-    return ((struct mc_adaptor_i *)mcu)->timer_init(mcu, freq);
+static inline int mc_timer_init (void *mcu, uint16_t arr, uint16_t psc ) {
+    return ((struct mc_adaptor_i *)mcu)->timer_init(mcu, arr, psc);
 }
 
 static inline int mc_timer_start (void *mcu) {

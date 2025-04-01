@@ -2,103 +2,123 @@
  *  @file:      XRFOC_Lib/mcu_conf/stm32/mc_stm32_conf.c
  *  @brief:     The Periphal Configuration for STM32 chip series.
  *  @author:    RunDong7582
- *  @date  :    2025 2/19 -> 2025 3/21 16:11
- *  @version:   XRFOC v0.1
+ *  @date  :    2025 3/21 16:11 -> 2025 4/1 16:28
+ *  @version:   XRFOC v0.2
  */
 
-#include "mc_stm32_conf.h"
+ #include "mc_stm32_conf.h"
 
-/* Button Initialize */
-static int stm32_button_init (void *mcu) {
-    mc_stm32_hw_t *hw = (mc_stm32_hw_t *)mcu;
-    GPIO_InitTypeDef gpio_config = {0};    
-    hw->gpio_config.Pin = Motor_Enable_Pin;
-    hw->gpio_config.Mode = GPIO_MODE_OUTPUT_PP;
-    hw->gpio_config.Pull = GPIO_NOPULL;
-    hw->gpio_config.Speed = GPIO_SPEED_FREQ_LOW;
-    HAL_GPIO_Init(Motor_Enable_GPIO_Port, &gpio_config);
-    return 0;
-}
-
-static int stm32_button_on_off (void *mcu, int state) {
-    mc_stm32_hw_t *hw = (mc_stm32_hw_t *)mcu;
-    HAL_GPIO_WritePin(Motor_Enable_GPIO_Port, Motor_Enable_Pin, state);
-    return 0;
-}
-/* PWM Initialize */
-static int stm32_pwm_init (void *mcu, uint32_t freq, uint8_t resolution) {
-    mc_stm32_hw_t *hw = (mc_stm32_hw_t *)mcu;
-    hw->pwm_freq = freq;
-    hw->pwm_resolution = resolution;
-
-    /* Set TIM as PWM(N)*/
-    TIM_OC_InitTypeDef oc_config = {0};
-    hw->htim.Instance = TIM1;
-    hw->htim.Init.Prescaler = SystemCoreClock / (freq * (1 << resolution)) - 1;
-    hw->htim.Init.CounterMode = TIM_COUNTERMODE_UP;
-    hw->htim.Init.Period = (1 << resolution) - 1;
-    HAL_TIM_PWM_Init(&hw->htim);
-
-    oc_config.OCMode = TIM_OCMODE_PWM1;
-    oc_config.Pulse  = 0; // 0% duty , but in theory should be 50% duty.
-    HAL_TIM_PWM_ConfigChannel(&hw->htim, &oc_config, TIM_CHANNEL_1);
-    HAL_TIM_PWM_Start(&hw->htim, TIM_CHANNEL_1);
-}
-
-static int stm32_pwm_set_duty(void *mcu, uint8_t channel, float duty) {
-    mc_stm32_hw_t *hw = (mc_stm32_hw_t *)mcu;
-    uint32_t pulse = (uint32_t)(duty * (1 << hw->pwm_resolution));
-    __HAL_TIM_SET_COMPARE(&hw->htim, channel, pulse);
-    return 0;
-}
-
-static int stm32_adc_init (void *mcu) {
-    mc_stm32_hw_t *hw = (mc_stm32_hw_t *)mcu;
-    ADC_ChannelConfTypeDef adc_config = {0};
-    hw->hadc.Instance = ADC1;
-    hw->hadc.Init.Resolution = ADC_RESOLUTION_12B;
-    HAL_ADC_Init(&hw->hadc);
-
-    adc_config.Channel = ADC_CHANNEL_0;
-    adc_config.Rank = 1;
-    HAL_ADC_ConfigChannel(&hw->hadc, &adc_config);
-    return 0;
-}
-
-static int stm32_adc_read (void *mcu, uint8_t channel, float *value) {
-    mc_stm32_hw_t *hw = (mc_stm32_hw_t *)mcu;
-    HAL_ADC_Start(&hw->hadc);
-    if (HAL_ADC_PollForConversion(&hw->hadc, 100) == HAL_OK) {
-        *value = HAL_ADC_GetValue(&hw->hadc);
-        return 0;
-    }
-    return -1;
-}
-
-static int stm32_timer_init (void *mcu, uint32_t freq) {
-    mc_stm32_hw_t *hw = (mc_stm32_hw_t *)mcu;
-    hw->htim.Instance = TIM6;
-    hw->htim.Init.Prescaler = SystemCoreClock / freq - 1; // 不一定是对的 ？
-    hw->htim.Init.CounterMode = TIM_COUNTERMODE_UP;
-    hw->htim.Init.Period = 1;
-    HAL_TIM_Base_Init(&hw->htim);
-    HAL_TIM_Base_Start_IT(&hw->htim);
-    return 0;
-}
-
-static int stm32_timer_start_it (void *mcu) {
-    mc_stm32_hw_t *hw = (mc_stm32_hw_t *)mcu;
-    HAL_TIM_Base_Start_IT(&hw->htim);
-    return 0;
-}
-
-struct mc_adaptor_i stm32_adaptor = {
-    .button_init = NULL,
-    .button_on_off = stm32_button_on_off,
-    .pwm_init = stm32_pwm_init,
-    .pwm_set_duty = stm32_pwm_set_duty,
-    .adc_init = stm32_adc_init,
-    .adc_read = stm32_adc_read,
-    .timer_init = stm32_timer_init,
-    .timer_start = stm32_timer_start_it
-};
+ /* Button Initialize */
+ static int mt_clk_init_stm32( struct mc_adaptor_stm32_hw *mcu, uint32_t plln, uint32_t pllm, uint32_t pllp, uint32_t pllq);
+ static int mt_power_init_stm32( struct mc_adaptor_stm32_hw *mcu );
+ static int mt_power_on_off_stm32( struct mc_adaptor_stm32_hw *mcu, int state );
+ static int mt_pwm_init_stm32( struct mc_adaptor_stm32_hw *mcu, uint16_t arr, uint16_t psc );
+ static int mt_pwm_set_duty_stm32( struct mc_adaptor_stm32_hw *mcu, uint8_t channel, float duty);
+ static int mt_adc_init_stm32( struct mc_adaptor_stm32_hw *mcu);
+ static int mt_adc_read_stm32( struct mc_adaptor_stm32_hw *mcu, uint8_t channel, float *value);
+ static int mt_timer_init_stm32( struct mc_adaptor_stm32_hw *mcu, uint16_t arr, uint16_t psc);
+ static int mt_timer_start_stm32( struct mc_adaptor_stm32_hw *mcu);
+ 
+ static struct mc_adaptor_i adaptor_interface = {
+     .clk_init       = (mc_adaptor_clk_init_fn_t)mt_clk_init_stm32,
+     .power_init     = (mc_adaptor_power_init_fn_t)mt_power_init_stm32,
+     .power_on_off   = (mc_adaptor_power_on_off_fn_t)mt_power_on_off_stm32,
+     .pwm_init       = (mc_adaptor_pwm_init_fn_t)mt_pwm_init_stm32,
+     .pwm_set_duty   = (mc_adaptor_pwm_set_duty_fn_t)mt_pwm_set_duty_stm32,
+     .adc_init       = (mc_adaptor_adc_init_fn_t)mt_adc_init_stm32,
+     .adc_read       = (mc_adaptor_adc_read_fn_t)mt_adc_read_stm32,
+     .timer_init     = (mc_adaptor_timer_init_fn_t)mt_timer_init_stm32,
+     .timer_start    = (mc_adaptor_timer_start_fn_t)mt_timer_start_stm32 
+ };
+ 
+ static int mt_clk_init_stm32 ( struct mc_adaptor_stm32_hw *mcu, uint32_t plln, uint32_t pllm, uint32_t pllp, uint32_t pllq)
+ {
+     HAL_StatusTypeDef ret = HAL_OK;
+     RCC_ClkInitTypeDef rcc_clk_init_handle;
+     RCC_OscInitTypeDef rcc_osc_init_handle;
+     
+     __HAL_RCC_PWR_CLK_ENABLE();                                         /* 使能PWR时钟 */
+     
+     /* 下面这个设置用来设置调压器输出电压级别，以便在器件未以最大频率工作时使性能与功耗实现平衡 */
+ 
+     __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);      /* VOS = 1, Scale1, 1.2V内核电压,FLASH访问可以得到最高性能 */
+ 
+     /* 使能HSE，并选择HSE作为PLL时钟源，配置PLL1，开启USB时钟 */
+     rcc_osc_init_handle.OscillatorType = RCC_OSCILLATORTYPE_HSE;        /* 时钟源为HSE */
+     rcc_osc_init_handle.HSEState = RCC_HSE_ON;                          /* 打开HSE */
+     rcc_osc_init_handle.PLL.PLLState = RCC_PLL_ON;                      /* 打开PLL */
+     rcc_osc_init_handle.PLL.PLLSource = RCC_PLLSOURCE_HSE;              /* PLL时钟源选择HSE */
+     rcc_osc_init_handle.PLL.PLLN = plln;
+     rcc_osc_init_handle.PLL.PLLM = pllm;
+     rcc_osc_init_handle.PLL.PLLP = pllp;
+     rcc_osc_init_handle.PLL.PLLQ = pllq;
+ 
+     ret=HAL_RCC_OscConfig(&rcc_osc_init_handle);                        /*初始化RCC*/
+     if(ret != HAL_OK)
+     {
+         return 1;                                                       /* 时钟初始化失败，可以在这里加入自己的处理 */
+     }
+ 
+     /* 选中PLL作为系统时钟源并且配置HCLK,PCLK1和PCLK2*/
+     rcc_clk_init_handle.ClockType = (RCC_CLOCKTYPE_SYSCLK \
+                                     | RCC_CLOCKTYPE_HCLK \
+                                     | RCC_CLOCKTYPE_PCLK1 \
+                                     | RCC_CLOCKTYPE_PCLK2);
+ 
+     rcc_clk_init_handle.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;         /* 设置系统时钟时钟源为PLL */
+     rcc_clk_init_handle.AHBCLKDivider = RCC_SYSCLK_DIV1;                /* AHB分频系数为1 */
+     rcc_clk_init_handle.APB1CLKDivider = RCC_HCLK_DIV4;                 /* APB1分频系数为4 */
+     rcc_clk_init_handle.APB2CLKDivider = RCC_HCLK_DIV2;                 /* APB2分频系数为2 */
+ 
+     ret = HAL_RCC_ClockConfig(&rcc_clk_init_handle, FLASH_LATENCY_5);   /* 同时设置FLASH延时周期为5WS，也就是6个CPU周期 */
+     if(ret != HAL_OK)
+     {
+         return 1;                                                       /* 时钟初始化失败 */
+     }
+     
+     /* STM32F405x/407x/415x/417x Z版本的器件支持预取功能 */
+     if (HAL_GetREVID() == 0x1001)
+     {
+         __HAL_FLASH_PREFETCH_BUFFER_ENABLE();                           /* 使能flash预取 */
+     }
+     return 0;
+ }
+ 
+ static int mt_power_init_stm32 (struct mc_adaptor_stm32_hw *mcu ) {
+     return 0;
+ }
+ 
+ static int mt_power_on_off_stm32 ( struct mc_adaptor_stm32_hw *mcu, int state ) {
+     return 0;
+ }
+ /* PWM Initialize */
+ static int mt_pwm_init_stm32 ( struct mc_adaptor_stm32_hw *mcu, uint16_t arr, uint16_t psc ) {
+     return 0;
+ }
+ 
+ static int mt_pwm_set_duty_stm32 ( struct mc_adaptor_stm32_hw *mcu, uint8_t channel, float duty ) {
+     return 0;
+ }
+ 
+ static int mt_adc_init_stm32 (struct mc_adaptor_stm32_hw *mcu) {
+     return 0;
+ }
+ 
+ static int mt_adc_read_stm32 (struct mc_adaptor_stm32_hw *mcu, uint8_t channel, float *value) {
+ }
+ 
+ static int mt_timer_init_stm32 (struct mc_adaptor_stm32_hw *mcu, uint16_t arr, uint16_t psc) {
+     return 0;
+ }
+ 
+ static int mt_timer_start_stm32 (struct mc_adaptor_stm32_hw *mcu) {
+     return 0;
+ }
+ 
+ int mc_adaptor_stm32_hw_init (struct mc_adaptor_stm32_hw *mcu)
+ {
+     mcu->adaptor = &adaptor_interface;
+     return 0;
+ }
+ 
+ 

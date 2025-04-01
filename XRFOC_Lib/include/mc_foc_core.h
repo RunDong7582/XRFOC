@@ -5,44 +5,24 @@
  *  @file:      XRFOC_Lib/include/mc_adaptor.h
  *  @brief:     Main FOC's call Func application layer.
  *  @author:    RunDong7582
- *  @date  :    2025 3/21 14:10
- *  @version:   XRFOC v0.1
+ *  @date  :    2025 3/21 14:10 -> 2025 4/1 16:26
+ *  @version:   XRFOC v0.2
  */
 
 #include "../include/mc_pid.h"
 #include "../include/mc_lowpass_filter.h"
 #include "../include/mc_smo_pll.h"
+#include "../include/mc_motor.h"
 #include <math.h>
-#include <stdint.h>
 
-#define     TIMER_FREQ       1000  //  1kHz
-#define     PWM_FREQ        30000  // 30kHz
-#define     PWM_ARR_BIT        8   //  8bit
-#define     PWM_Period       255   //  0 ~ 256
-
-#define     HIGH    1
-#define     LOW     0
-
-volatile uint32_t timer_counter = 0;
-
-typedef struct {
-
+struct Cur_vol_s {
     float I_d;
     float I_q;
     float I_alpha;
     float I_beta;
     float Ud;
     float Uq;
-
-} xrfoc_cur_vol_s;
-
-typedef struct {
-
-    float I_a;
-    float I_b;
-    float I_c;
-
-} xrfoc_origin_t;
+};
 
 /* -------------------- pid interface func -------------------- */
 void xrfoc_set_speed_pid     ( float P, float I, float D, float ramp, float limit );
@@ -70,10 +50,11 @@ void xrfoc_vbus_set  ( float power_supply );
 void xrfoc_run       ( void );
 
 /* ---------------------- Current Update ---------------------- */
-xrfoc_cur_vol_s xrfoc_Iq_Id_calc (float current_a, float current_b, float angle_el);
-float xrfoc_current_q ( void );
-float xrfoc_current_d ( void );
+struct Cur_vol_s cal_Iq_Id (float current_a, float current_b, float angle_el);
+float xrfoc_current_q_lpf ( void );
+float xrfoc_current_d_lpf ( void );
 void  xrfoc_getphase_current ( void );
+
 /* -------------------- SMO Control Mode ----------------------*/
 void  xrfoc_smo_current_set_torque  ( float input );
 void  xrfoc_smo_current_set_speed   ( float input );

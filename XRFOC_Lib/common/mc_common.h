@@ -1,17 +1,6 @@
 #ifndef __MC_COMMON_H
 #define __MC_COMMON_H
 
-/* USER Chip Macro Input */
-// #define STM32   
-#define ESP32   
-// #define CHV32   
-// #define  CW32   
-// #define LKS32   
-// #define  AT32   
-
-/* Motor && Chip external pin */
-#define demo_V4_support 
-
 #define _PI                         3.14159265359f
 #define _PI_2                       1.57079632679f
 #define _PI_3                        1.0471975512f
