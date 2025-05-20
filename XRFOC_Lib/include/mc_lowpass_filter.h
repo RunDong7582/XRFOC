@@ -5,8 +5,8 @@
  *  @file       XRFOC_Lib/include/mc_lowpass_filter.h
  *  @brief      LowPassFilter first order implemented.
  *  @author:    RunDong7582
- *  @date       2025 3/21 11:02 -> 2025 4/1 16:26
- *  @version    XRFOC v0.2
+ *  @date       2025.5.19 18:32
+ *  @version    XRFOC release version 
  */
 
 typedef struct {

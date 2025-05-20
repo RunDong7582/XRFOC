@@ -18,11 +18,6 @@
 float voltage_power_supply;
 float Target_flt;
 
-Motor_params motor_bldc = {
-    .pp =   7,
-    .dir = -1,
-};
-
 SMO_PLL_Observer SMO = {
     .Rs = 8.25f,
     .Ls = 0.004256f,
