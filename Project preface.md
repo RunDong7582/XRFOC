@@ -18,5 +18,6 @@ There is any future use ...
 * STM Cubemx
 
 # Infrastructure
-> ([XRFOC infrastructure](assets/XRFOC.png)) 
-> ([Software diagram](assets/diagram.png)) 
+>![[assets/XRFOC.png]] 
+> This picuture shows the infrastructure.
+>![[assets/diagram.png]] 
