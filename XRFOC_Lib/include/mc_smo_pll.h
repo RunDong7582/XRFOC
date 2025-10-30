@@ -41,6 +41,8 @@ typedef struct {
     float Ibeta_Err;
   
     float h;
+    /* 滑模增益要足够大以使式中观测的电流收敛到实际电流，
+    但这个值太大会导致观测的电流剧烈抖动，增加估计误差 */
   
     float Ealpha;
     float Ebeta;
