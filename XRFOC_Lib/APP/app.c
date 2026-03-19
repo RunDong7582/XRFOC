@@ -1,9 +1,9 @@
 /**
- *  @file:      XRFOC_Lib/APP/app.c
+ *  @file:      XRFOC_Lib_on_stm32/APP/app.c
  *  @brief:     XRFOC Application Layer.
  *  @author:    RunDong7582
- *  @date  :    2025.5.19 14:01 
- *  @version:   XRFOC release version 
+ *  @date  :    2026 3/19 18:00
+ *  @version:   XRFOC v1.0
  */
 
 #include "app.h"
@@ -28,9 +28,21 @@ extern float  adc_amp_bus;
 
 extern ADC_HandleTypeDef hadc1;
 
+#define ALIGN_OK_COUNT_TARGET      (200)
+#define SPEED_MATCH_THRESHOLD_RAD  (12.0f)
+
 void APP_StateMachine_Handler ( XRFOC_Console *self )
 {
+    static FOC_STAGE last_stage = _V_F_STAGE;
+    static uint16_t align_guard_cnt = 0;
     int bAngleClosedLoop = 0;               /* 表示可以切换至闭环标志位 */         
+
+    if (self->schedule != last_stage)
+    {
+        align_guard_cnt = 0;
+        last_stage = self->schedule;
+    }
+
     switch (self->schedule)                 /* 状态机调度 */     
     {
         case _V_F_STAGE:                    /* 注意switch case 写法与平常不同，参考lks08 demo */
@@ -43,26 +55,50 @@ void APP_StateMachine_Handler ( XRFOC_Console *self )
         }
         case _ALIGN_STAGE:
         {
+            float mech_speed_est = SMO.Est_speed / motor_console.pp;
+            float speed_error = ABS(self->openloopVel - mech_speed_est);
+            uint16_t align_timeout_cnt = (SMO.align_timeout_count > 0U) ? SMO.align_timeout_count : 1200U;
             bAngleClosedLoop = xrfoc_vf_start(motor_console.num, motor_console.dir);
             if ( bAngleClosedLoop == 0 && SMO.VF_flag == 2 ) {
-                if ( (self->openloopVel == SMO.VF_max_vel) && ( self->cntangle < 200) ) /* 这个计数值上限100，需要测试 */
+                align_guard_cnt++;
+                if ( (self->openloopVel >= (SMO.VF_max_vel - 1.0f)) && ( self->cntangle < ALIGN_OK_COUNT_TARGET) )
                 {
                     self->angle_error = ABS( SMO.Est_Theta - self->eAngle ); /* 计算电角度误差 */
                     if ( self->angle_error > 1.0f ) 
                     {
                         self->angle_error = 2*_PI - self->angle_error; /* 归一化 */
                     }
-                    if( self->angle_error < self->angle_thresh + err_rad ) 
+                    if( (self->angle_error < (self->angle_thresh + err_rad)) && (speed_error < SPEED_MATCH_THRESHOLD_RAD) ) 
                                     self->cntangle++;
+                    else if (self->cntangle > 0)
+                                    self->cntangle--;
                 }
                 else 
                 {
                     bAngleClosedLoop = 1;
                     self->cntangle = 0;
                 }
+
+                if (align_guard_cnt > align_timeout_cnt)
+                {
+                    if ((SMO.startup_mode == XRFOC_STARTUP_IF) && (SMO.startup_fallback_en != 0U))
+                    {
+                        SMO.startup_mode = (SMO.fallback_mode == XRFOC_STARTUP_IF) ? XRFOC_STARTUP_VF : SMO.fallback_mode;
+                        SMO.VF_flag = 0;
+                        self->cntangle = 0;
+                        self->schedule = _V_F_STAGE;
+                    }
+                    else
+                    {
+                        bAngleClosedLoop = 1;
+                        self->cntangle = 0;
+                    }
+                    align_guard_cnt = 0;
+                }
             } 
             else if ( bAngleClosedLoop == 1 && SMO.VF_flag == 2 ) {
                 self->schedule = _CLOSE_LOOP_STAGE;
+                align_guard_cnt = 0;
             }
             break;
         }
@@ -100,150 +136,18 @@ void xrfoc_current_offset_sample (void)
 
 void xrfoc_current_update (void)
 {
-//	for(uint8_t i=0; i<3; i++)
-//	{
-//		adc_val_m1[i] = g_adc_val[i+2];
-//		adc_amp[i] = adc_val_m1[i] - adc_amp_offset[i][ADC_AMP_OFFSET_TIMES];
-//		if(adc_amp[i] < 0)  
-//			adc_amp_un[i] = 0;                  /* 反电动势电压为悬空绕组直接清0 */
-//		else if(adc_amp[i] >= 0)                /* 去除反电动势引起的负电流数据 */
-//			adc_amp_un[i] = adc_amp[i];
-//	}
-//	/*运算母线电流（母线电流为任意两个有开关动作的相电流之和）*/
-//	adc_amp_bus = (adc_amp_un[0] + adc_amp_un[1] + adc_amp_un[2])*ADC2CURT;
+	for(uint8_t i=0; i<3; i++)
+	{
+		adc_val_m1[i] = g_adc_val[i+2];
+		adc_amp[i] = adc_val_m1[i] - adc_amp_offset[i][ADC_AMP_OFFSET_TIMES];
+        adc_amp_un[i] = adc_amp[i];
+	}
+	/*运算母线电流（母线电流为任意两个有开关动作的相电流之和）*/
+	adc_amp_bus = (adc_amp_un[0] + adc_amp_un[1] + adc_amp_un[2])*ADC2CURT;
 
-//    motor_I_UVW.current_u = adc_amp_un[0]* ADC2CURT;    /*U*/
-//    motor_I_UVW.current_v = adc_amp_un[1]* ADC2CURT;    /*V*/
-//	motor_I_UVW.current_w = adc_amp_un[2]* ADC2CURT;    /*W*/
-}
-
-
-/**
- * @brief       设置目标值++
- * @param       无
- * @retval      无
- */
-void step_up(void)
-{
-    motor_console.run_flag = RUN;                       /* 开启运行 */
-    start_motor1();                                     /* 开启运行 */
-    
-    if ( motor_console.dir == CCW && motor_I_UVW.Target_set == 0.0f )
-    {
-         motor_console.dir = CW;
-    }
-    float speed_rpm_temp = rad_s_to_rpm(motor_I_UVW.Target_set);
-    speed_rpm_temp += 400;
-
-    if (motor_I_UVW.Target_set == 0)
-    {
-        motor_console.run_flag = STOP;
-        stop_motor1();                                  /* 停机 */
-    }
-    if (speed_rpm_temp >= 3200) {
-        /* 最高不超过3200PRM */
-        speed_rpm_temp = 3200;
-        motor_I_UVW.Target_set = rpm_to_rad_s(speed_rpm_temp);
-    } else {
-        motor_I_UVW.Target_set += rpm_to_rad_s(400);
-    }     
-}
-
-/**
- * @brief       设置目标值--
- * @param       无
- * @retval      无
- */
-void step_down(void)
-{
-    motor_console.run_flag = RUN;                       /* 开启运行 */
-    start_motor1();                                     /* 开启运行 */
-    
-    if ( motor_console.dir == CW && motor_I_UVW.Target_set == 0.0f )
-    {
-         motor_console.dir = CCW;
-    }
-    float speed_rpm_temp = rad_s_to_rpm(motor_I_UVW.Target_set);
-    speed_rpm_temp -= 400;
-
-    if (motor_I_UVW.Target_set == 0)
-    {
-        motor_console.run_flag = STOP;
-        stop_motor1();                                  /* 停机 */
-    }
-    if (speed_rpm_temp <= 45) {
-        /* 最高不超过3200PRM */
-        speed_rpm_temp = 45;
-        motor_I_UVW.Target_set = 5; //最低5rad/s
-    } else {
-        motor_I_UVW.Target_set -= rpm_to_rad_s(400);
-    }     
-}
-
-int  BSP_XRFOC_Init() //( struct mc_adaptor_stm32_hw *stm32f407igtx )
-{
-#if 0	
-    key_init();
-    led_init();
-
-    if (mc_adaptor_stm32_hw_init(stm32f407igtx) != 0) {
-        return 1;
-    }
-
-    /* 设置时钟,168Mhz */
-    if (mc_clk_init(stm32f407igtx, 336, 8, 2, 7 ) != 0) {
-        return 2;
-    }
-
-    delay_init(168);  
-
-    /* 串口初始化为115200 */
-    if (mc_uart_init(stm32f407igtx, 115200) != 0) {
-        return 3;
-    }
-
-    /* 电机使能引脚1、2 */
-    mc_power_init(stm32f407igtx);
-
-    /* 18khz pwm */
-    if (mc_pwm_init(stm32f407igtx, 168000/18-1, 0) != 0) {
-        return 4;
-    }
-
-    // /* timer init */
-    // if (mc_timer_init(stm32f407igtx, 1000-1, 84-1) != 0) {
-    //     return 5;
-    // }
-
-    start_motor1();
-#endif	
-    return 0;
-
-}
-
-void BSP_init_handle ( uint8_t res )
-{
-    switch(res)
-    {
-        case 0:
-            printf("XRFOC Periphal Init Success\r\n");
-        break;
-        case 1:
-            LED0_TOGGLE();  /* LED0(红灯) 翻转 表示抽象层初始化失败 */
-        break;
-        case 2:
-            LED0_TOGGLE();  /* LED0(红灯) 翻转 表示时钟树初始化失败 */
-        break;
-        case 3:
-            LED1_TOGGLE();  /* LED1 翻转 表示串口初始化失败 */
-        break;
-        case 4:
-            printf("Periphal 18kHz PWM Init Failed\r\n");
-        break;
-        default:
-            printf("Unknow Init Failed\r\n");
-        break;
-    }
+    motor_I_UVW.current_u = adc_amp_un[0]* ADC2CURT;    /*U*/
+    motor_I_UVW.current_v = adc_amp_un[1]* ADC2CURT;    /*V*/
+	motor_I_UVW.current_w = adc_amp_un[2]* ADC2CURT;    /*W*/
 }
 
 /**
@@ -254,17 +158,17 @@ void BSP_init_handle ( uint8_t res )
 void xrfoc_run ( void ) {
 
     /* LED0(红灯) 翻转 表示运行一次FOC&观测器解算 */
-    LED0_TOGGLE(); 
+	// LED0_TOGGLE();
 	
-//	xrfoc_current_offset_sample();
-    /* Update the current */
-//    xrfoc_current_update();   
+    //	xrfoc_current_offset_sample();
+    /* current_u/v/w由ADC注入中断回调统一更新 */
     
     motor_I_UVW.cntt++;
     // hfoc.eAngle = (hfoc.schedule < _CLOSE_LOOP_STAGE) ? hfoc.eAngle:SMO.Est_Theta; 
     // Cur_vol = cal_Iq_Id(motor_I_UVW.current_u, motor_I_UVW.current_v, hfoc.eAngle);
 
-    Cur_vol = cal_Iq_Id(motor_I_UVW.current_u, motor_I_UVW.current_v, SMO.Est_Theta);
+    float park_angle = (hfoc.schedule < _CLOSE_LOOP_STAGE) ? hfoc.eAngle : SMO.Est_Theta;
+    Cur_vol = cal_Iq_Id(motor_I_UVW.current_u, motor_I_UVW.current_v, park_angle);
     smo_closeloop(&SMO);
     
     if (motor_I_UVW.cntt > 42) {

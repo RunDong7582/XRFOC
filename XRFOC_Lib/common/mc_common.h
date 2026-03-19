@@ -26,8 +26,5 @@
 
 #define Tperiod             1
 
-#define CCW                         ( 2 )                 /* 逆时针 */
-#define CW                          ( 1 )  
-
 #define err_rad                 deg_to_rad(5)
 #endif 

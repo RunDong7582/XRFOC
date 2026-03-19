@@ -1,21 +1,22 @@
 /**
- *  @file:      XRFOC_Lib_on_stm32/src/mc_lowpassfilter.c
+ *  @file:      XRFOC_Lib/src/mc_lowpassfilter.c
  *  @brief:     LowPassFilter first order implemented.
  *  @author:    RunDong7582
- *  @date  :    2025.5.19 18:46
- *  @version:   XRFOC release version
+ *  @date  :    2026 3/19 18:00
+ *  @version:   XRFOC v1.0
  */
  #include "../XRFOC_Lib/APP/app.h"
  #include "../XRFOC_Lib/include/mc_lowpass_filter.h"
+ #include "../XRFOC_Lib/include/mc_time.h"
 
  float LowPassFilter_operator ( LowPassFilter* filter, float x )
  {
-     uint32_t timestamp = HAL_GetTick();
+     uint32_t timestamp = mc_time_us();
  
-     float dt = (timestamp - filter->timestamp_prev) * 1e-3f;
+     float dt = (timestamp - filter->timestamp_prev) * 1e-6f;
  
-     if (dt < 0.0f ) dt = 1e-3f;
-     else if(dt > 0.3f) {
+     if (dt <= 0.0f ) dt = 1e-4f;
+     else if(dt > 0.05f) {
          filter->y_prev = x;
          filter->timestamp_prev = timestamp;
          return x;

@@ -1,34 +1,52 @@
-# 无刷直流电机无感矢量控制观测器算法及软件开发
-# Sensorless Vector Control Observer Algorithm and Software Development for Brushless DC Motors
+ <div align = "center">
+	<a name ="Top"></a>
+	<h1>XRFOC</h1>
+		<strong>
+			<p>👉👉👉&nbsp;&nbsp;
+				基于DengFOC的二次开发库
+				&nbsp;&nbsp;
+		👈👈👈</p>
+	</strong>
+</div>
 
-## 研究方向
-## Research Direction
-- 电机控制
-- Motor Control
-- 嵌入式软件开发
-- Embedded Software Development
+> 本项目主要参考自：[DengFoc](https://github.com/ToanTech/DengFOC_Lib),对其Cpp算法库进行移植为C库。
 
-## 题目介绍
-## Topic Introduction
-无刷直流电机广泛应用于多个领域，尤其是家电和电动工具，其市场需求量大但价格敏感。无传感器控制成为降低成本的有效选择。为在无感状态下实现平稳的矢量控制策略，需要设计强大的速度观测器。开发此类观测器并将其移植至高性价比的MCU上是一项具有重要价值的工作。
-Brushless DC motors are widely used in various fields, especially in home appliances and power tools, with a large market demand but price sensitivity. Sensorless control has become an effective option for cost reduction. To achieve smooth vector control in a sensorless state, it's essential to design a robust speed observer. Developing such an observer and porting it to a cost-effective MCU is a valuable task.
+对于XRFOC_Lib的使用说明如下：
 
-## 完成题目的基本要求
-## Basic Requirements to Complete the Topic
-1. 掌握无刷直流电机无感矢量控制原理。
-   - Master the principle of sensorless vector control for brushless DC motors.
-2. 基于 MATLAB 建立观测器模型。
-   - Establish the observer model based on MATLAB.
-3. 开发算法代码并移植到 MCU 上进行在线测试，不断优化。
-   - Develop algorithm code and port it to the MCU for online testing and continuous optimization.
+- 实际的运行平台，在STM32F4正点原子的电机控制板上，相关的外设配置（adc、tim）自行学习，建议使用cubemx进行配置。（自行实现adc.c，tim.c）
+- main.c无任何参考价值。（参考dengfoc的初始化）
+- 流程请参考assets/diagram.png。
+- 作者二次开发过程可以参考Stage Summary文件夹的周报，写的很详细。
+- 请注意获取时间戳的方式，如果你在stm32平台上，应该使用`HAL_GetTick()`.注意各种细节。
+- 最终实现的效果与dengfoc有区别，作者认为是硬件平台的设计有关。问题在于uqud很小，只能选择限幅在0-2v，而实际应该在0-1/2\*供电电压0-12v之间，所以无感foc运行转速受限，按理来说可以和Dengfoc一样运行至2100转左右。
+- 将V/F启动算法替换为I/F启动，这是目前基本所有做电控厂商的启动方式。
+- 后续DengFOC会推出simulink模型，有助于推动上述问题。建议购买DengFOC板子结合配套视频学习灯哥的思想，这对于入门无感FOC有巨大的帮助（很客观）。
+- 如果你觉得对你有帮助的话，请给我一个star🌟吧，谢谢。
 
-## 参考资料
-## Reference Materials
-1. 无刷直流电机无感矢量控制原理书籍或资料
-   - Literature or materials on the principle of sensorless vector control for brushless DC motors
-2. 基于 MATLAB 的电机控制建模资料
-   - Motor control modeling materials based on MATLAB
-3. 嵌入式编程资料
-   - Embedded programming materials
-4. MCU 控制驱动板技术手册
-   - MCU control driver board technical manual
+---
+
+Usage instructions for XRFOC_Lib are as follows:
+- The actual runtime platform is the STM32F4 Zhengdian Atom motor control board. Configure relevant peripherals (ADC, TIM) independently; it is recommended to use Cubemx for configuration. (Implement adc.c and tim.c yourself)
+- main.c has no reference value. (Refer to dengfoc's initialization) 
+- The author's secondary development process is documented in the weekly reports within the Stage Summary folder, which are very detailed. 
+- Pay attention to the method for obtaining timestamps. On the STM32 platform, you should use `HAL_GetTick()`. Note all relevant details. 
+- The final implementation differs from DengFOC's results, which the author attributes to hardware platform design. The issue lies in the small UQUD range, limiting operation to 0-2V instead of the intended 0-1/2*supply voltage (0-12V). Consequently, the sensorless FOC's rotational speed is constrained, whereas it should theoretically reach around 2100 RPM like DengFOC. 
+- Replacing the V/F startup algorithm with I/F startup is now the standard approach adopted by virtually all manufacturers in the field of electronic control. 
+- DengFOC will release a Simulink model in the future, which will help address the aforementioned issues. It is recommended to purchase the DengFOC board and study the accompanying videos to understand Dengge's methodology. This is immensely helpful for beginners learning sensorless FOC (very objectively). 
+- If you found this helpful, please give it a star🌟. Thank you.
+
+## 📄 License & Terms of Use / 开源协议与使用条款
+
+本项目遵循 **PolyForm Noncommercial License 1.0.0** 协议开源。
+
+**允许 (Permitted):**
+- ✅ 学习研究 (Learning & Study)
+- ✅ 个人项目 (Personal Projects)
+- ✅ 代码二次开发及验证 (Secondary Development & Evaluation)
+- ✅ 学术用途 (Academic Research)
+
+**禁止 (Prohibited):**
+- ❌ 任何形式的商业用途 (Any Commercial Use)
+- ❌ 闭源作为商业项目的一部分发布 (Distribution as part of a closed-source commercial product)
+
+详见项目根目录的 `LICENSE` 文件。任何由本代码衍生出的开发，在再分发时必须保留原作者信息（署名）并同时包含同样的免责及非商业限制声明。

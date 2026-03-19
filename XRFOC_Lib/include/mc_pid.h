@@ -5,8 +5,8 @@
  *  @file       XRFOC_Lib/include/mc_pid.h
  *  @brief      Pid algorithm implemented.
  *  @author:    RunDong7582
- *  @date       2025.5.19 18:32
- *  @version    XRFOC release version 
+ *  @date       2026 3/19 18:00
+ *  @version    XRFOC v1.0
  */
 
 /*--------inc--------------*/ 
@@ -23,6 +23,7 @@ typedef struct {
     float error_prev;
     float output_prev;
     float integral_prev;
+    float SetPoint;
     // unsigned long timestamp_prev;
     uint32_t timestamp_prev;
 } PIDController;

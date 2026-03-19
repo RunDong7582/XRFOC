@@ -5,8 +5,8 @@
  *  @file:      XRFOC_Lib/include/mc_adaptor.h
  *  @brief:     Main FOC's call Func application layer.
  *  @author:    RunDong7582
- *  @date  :    2025.5.19 18:30
- *  @version:   XRFOC release version 
+ *  @date  :    2026 3/19 18:00
+ *  @version:   XRFOC v1.0
  */
 
 #include "../XRFOC_Lib/include/mc_pid.h"
@@ -66,6 +66,8 @@ typedef struct {
     uint8_t cntt;
 } Motor_Console_Data;
 
+typedef void (*xrfoc_pwm_write_duty_fn_t)(float duty_a, float duty_b, float duty_c);
+
 void xrfoc_module_struct_clear  ( void );
 /* -------------------- pid interface func -------------------- */
 void xrfoc_set_speed_pid     ( float P, float I, float D, float ramp, float limit );
@@ -84,6 +86,7 @@ float _sqrtApprox           ( float number );
 // float _cos                  ( float x );
 
 /* ---------------------- SVPWM Func -------------------------- */
+void xrfoc_register_pwm_write_fn ( xrfoc_pwm_write_duty_fn_t fn );
 void mc_setpwm      ( float Ua, float Ub, float Uc );
 void mc_set_torque  ( float Uq, float Ud, float angle_el );
 

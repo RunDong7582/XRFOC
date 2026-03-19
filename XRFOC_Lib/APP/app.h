@@ -5,17 +5,14 @@
  *  @file:      XRFOC_Lib/APP/app.h
  *  @brief:     XRFOC Application Layer.
  *  @author:    RunDong7582
- *  @date  :    2025.5.19 14:01
- *  @version:   XRFOC release version
+ *  @date  :    2026 3/19 18:00
+ *  @version:   XRFOC v1.0
  */
 
 #include "../XRFOC_Lib/include/mc_foc_core.h"
 #include "../XRFOC_Lib/include/mc_adaptor.h"
 #include "../XRFOC_Lib/mcu_conf/stm32/mc_stm32_conf.h"
 #include "../XRFOC_Lib/common/mc_common.h"
-
-void step_up(void);
-void step_down(void);
 
 void xrfoc_run (void);
 void xrfoc_target_torque_set ( Control_Obj type );
