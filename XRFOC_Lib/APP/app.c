@@ -196,3 +196,43 @@ void xrfoc_target_torque_set ( Control_Obj type )
     }
 }
 
+float voltage[3];
+float current[3];
+float current_lpf[3];
+void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef *hadc)
+{
+	if(hadc == &hadc1)
+	{
+        motor_console.svpwm_flag = 1;
+		
+		adc_val_m1[0] = HAL_ADCEx_InjectedGetValue(&hadc1, ADC_INJECTED_RANK_1);
+		adc_val_m1[1] = HAL_ADCEx_InjectedGetValue(&hadc1, ADC_INJECTED_RANK_2);
+		adc_val_m1[2] = HAL_ADCEx_InjectedGetValue(&hadc1, ADC_INJECTED_RANK_3);
+		
+		for(uint8_t i=0; i<3; i++)
+		{           
+			adc_amp[i] = adc_val_m1[i] - adc_amp_offset[i][ADC_AMP_OFFSET_TIMES];
+		}
+
+		adc_amp_bus = (adc_amp[0] + adc_amp[1] + adc_amp[2])*ADC2CURT;
+
+		current[0] = adc_amp[0]* ADC2CURT;
+		current[1] = adc_amp[1]* ADC2CURT;
+		current[2] = adc_amp[2]* ADC2CURT;
+		
+		FirstOrderRC_LPF(current_lpf[0],current[0],0.1f);
+		FirstOrderRC_LPF(current_lpf[1],current[1],0.1f);
+		FirstOrderRC_LPF(current_lpf[2],current[2],0.1f);
+		
+		motor_I_UVW.current_u = current_lpf[0];
+		motor_I_UVW.current_v = current_lpf[1];
+		motor_I_UVW.current_w = current_lpf[2];
+
+        if (motor_console.run_flag == RUN)
+        {
+            xrfoc_run();
+            APP_StateMachine_Handler(&hfoc);
+        }
+
+    }
+}
